@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M/M/1 Queue Simulation</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="panel">
+    <div class="title-row">
+      <div>
+        <h2>M/M/1 Queue Simulation</h2>
+        <p class="subtitle">Frontend display connected to a protected FastAPI simulation backend.</p>
+      </div>
+      <span id="backendBadge" class="backend-badge checking">Backend: checking…</span>
+    </div>
+
+    <div class="controls">
+      <label>
+        Arrival rate λ
+        <input id="lambda" type="number" value="0.8" min="0" step="0.1">
+      </label>
+
+      <label>
+        Service rate μ
+        <input id="mu" type="number" value="1.0" min="0" step="0.1">
+      </label>
+
+      <label>
+        Histogram bins
+        <input id="binCount" type="number" value="10" min="2" max="30" step="1">
+      </label>
+
+      <button id="startButton" type="button">Start</button>
+      <button id="pauseButton" type="button">Pause</button>
+      <button id="resetButton" type="button">Reset</button>
+    </div>
+
+    <div id="message" role="status" aria-live="polite"></div>
+
+    <section class="status" aria-label="Simulation status">
+      <div class="status-item">Simulation time<strong id="timeValue" class="status-value">0.0</strong></div>
+      <div class="status-item">Waiting in queue<strong id="queueValue" class="status-value">0</strong></div>
+      <div class="status-item">Server status<strong id="serverValue" class="status-value">Idle</strong></div>
+      <div class="status-item">Customers in system<strong id="systemValue" class="status-value">0</strong></div>
+      <div class="status-item">Waiting-time samples<strong id="sampleValue" class="status-value">0</strong></div>
+      <div class="status-item">Average waiting time<strong id="averageWaitValue" class="status-value">0.00</strong></div>
+      <div class="status-item">Maximum waiting time<strong id="maximumWaitValue" class="status-value">0.00</strong></div>
+    </section>
+
+    <canvas id="simCanvas" width="900" height="230"></canvas>
+
+    <h3>Queue length over time</h3>
+    <div class="chart-container"><canvas id="queueChart"></canvas></div>
+
+    <h3>Waiting-time probability density histogram</h3>
+    <div class="chart-container"><canvas id="histogramChart"></canvas></div>
+
+    <p class="note">
+      Waiting time is measured from customer arrival until the customer begins service.
+      The histogram vertical axis shows estimated probability density, so the total area
+      of all bars is approximately equal to 1.
+    </p>
+  </main>
+
+  <footer class="copyright-footer">
+    © 2026 Nguyen Minh Quy – OSE Logistics Simulation Lab
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

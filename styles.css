@@ -1,0 +1,90 @@
+* { box-sizing: border-box; }
+
+body {
+  max-width: 1000px;
+  margin: 30px auto;
+  padding: 0 20px;
+  font-family: Arial, sans-serif;
+  background: #f5f7fa;
+  color: #222;
+}
+
+.panel {
+  padding: 22px;
+  background: white;
+  border: 1px solid #d8dce2;
+  border-radius: 12px;
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+h2 { margin: 0; }
+h3 { margin-top: 28px; margin-bottom: 10px; }
+.subtitle { margin: 6px 0 0; color: #5b6472; font-size: 14px; }
+
+.backend-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid #cdd3dd;
+  font-size: 13px;
+  font-weight: 700;
+}
+.backend-badge.online { background: #e9f8ee; color: #146c2e; border-color: #a6dbb5; }
+.backend-badge.offline { background: #fff0f0; color: #a21b1b; border-color: #e4adad; }
+.backend-badge.checking { background: #fff8e5; color: #7a5a00; border-color: #ead38b; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin: 22px 0 20px;
+}
+
+label { display: flex; flex-direction: column; gap: 5px; font-weight: bold; }
+input { width: 110px; padding: 8px; border: 1px solid #aaa; border-radius: 5px; }
+button { padding: 9px 18px; border: 1px solid #888; border-radius: 5px; cursor: pointer; background: #f7f7f7; }
+button:hover { background: #e8e8e8; }
+button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+#simCanvas { width: 100%; max-width: 900px; height: auto; border: 1px solid #ccc; background: white; }
+
+.status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 12px;
+  margin: 15px 0 20px;
+}
+.status-item { padding: 10px; background: #f5f7fa; border: 1px solid #e0e3e8; border-radius: 7px; }
+.status-value { display: block; margin-top: 5px; font-size: 18px; }
+
+.chart-container { position: relative; height: 320px; margin-top: 15px; }
+#message { min-height: 22px; margin: 8px 0; color: #b00020; font-weight: bold; }
+.note { margin-top: 8px; color: #555; font-size: 14px; line-height: 1.5; }
+
+.copyright-footer {
+  margin-top: 24px;
+  padding: 14px 20px;
+  border-top: 1px solid #d7dce4;
+  background: #f8fafc;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  body { margin: 16px auto; padding: 0 10px; }
+  .panel { padding: 15px; }
+  .controls { align-items: stretch; }
+  label, input, button { width: 100%; }
+}
