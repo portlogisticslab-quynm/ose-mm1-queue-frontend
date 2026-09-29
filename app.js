@@ -112,7 +112,7 @@ function validateInputs() {
 }
 
 async function apiRequest(path, options = {}) {
-  const response = await fetch(`${window.OSE_API_BASE}${path}`, {
+  const response = await fetch(`${window.OSE_API_BASE}/api/health`), {
     ...options,
     headers: {
       "Content-Type": "application/json",
