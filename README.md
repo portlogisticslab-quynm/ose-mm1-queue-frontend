@@ -1,36 +1,9 @@
-# OSE M/M/1 Queue Simulation — Frontend
+# OSE M/M/1 Queue Simulation (frontend-only)
 
-Static frontend for the M/M/1 queue simulation. The queue state, random arrivals,
-service completions, waiting-time statistics, and histogram calculations are
-performed by the FastAPI backend.
+Static site: the M/M/1 simulation runs in the browser (`mm1-engine.js`), no backend.
 
-## Files
-
-- `index.html` — page structure
-- `styles.css` — visual styling
-- `config.js` — local and online backend URLs
-- `app.js` — UI controls, API calls, canvas drawing, and Chart.js rendering
-- `_headers` — recommended Cloudflare Pages response headers
-
-## Run locally
-
-Start the backend first at `http://127.0.0.1:8000`, then run:
-
-```powershell
-cd C:\ose-mm1-queue-frontend
-python -m http.server 5500
-```
-
-Open `http://127.0.0.1:5500`.
-
-## Connect to Render
-
-After deploying the backend, replace the placeholder in `config.js` with the
-actual Render URL, without a trailing slash.
-
-## Deploy to Cloudflare Pages
-
-- Framework preset: `None`
-- Build command: `exit 0`
-- Build output directory: `.`
-- Production branch: `main`
+- `index.html`, `styles.css`, `app.js` — UI (same layout as the former FastAPI-served page, plus a Speed selector)
+- `mm1-engine.js` — port of the backend 1.0.0-demo model: time step Δt = 0.2,
+  service completion p = 1 − e^(−μΔt), at most one arrival p = 1 − e^(−λΔt), FIFO,
+  waiting time = start − arrival; histogram over [0, max wait], density = count / (n·width)
+- Deploy: Cloudflare Pages, build command `exit 0`, output `.`

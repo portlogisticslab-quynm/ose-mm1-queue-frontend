@@ -1,13 +1,15 @@
 "use strict";
 
+/* M/M/1 Queue Simulation — UI. All computation runs in the browser (mm1-engine.js). */
+
 const STEP_DURATION_MS = 300;
 const MAX_CHART_POINTS = 250;
 const MAX_VISIBLE_CUSTOMERS = 20;
 
-let sessionId = null;
+const { MM1Simulation, validate, ENGINE_VERSION } = window.OSE_MM1;
+
+let simulation = null;
 let timerId = null;
-let requestInProgress = false;
-let latestSnapshot = null;
 
 const canvas = document.getElementById("simCanvas");
 const ctx = canvas.getContext("2d");
@@ -15,10 +17,11 @@ const ctx = canvas.getContext("2d");
 const lambdaInput = document.getElementById("lambda");
 const muInput = document.getElementById("mu");
 const binCountInput = document.getElementById("binCount");
+const speedInput = document.getElementById("speed");
 const startButton = document.getElementById("startButton");
 const pauseButton = document.getElementById("pauseButton");
 const resetButton = document.getElementById("resetButton");
-const backendBadge = document.getElementById("backendBadge");
+const engineBadge = document.getElementById("backendBadge");
 
 const timeValue = document.getElementById("timeValue");
 const queueValue = document.getElementById("queueValue");
@@ -90,68 +93,25 @@ const histogramChart = new Chart(document.getElementById("histogramChart").getCo
 });
 
 function validateInputs() {
-  const lambda = Number(lambdaInput.value);
-  const mu = Number(muInput.value);
-  const binCount = Number(binCountInput.value);
-
-  if (!Number.isFinite(lambda) || !Number.isFinite(mu) || lambda < 0 || mu < 0) {
-    message.textContent = "λ and μ must be valid non-negative numbers.";
-    return null;
-  }
-
-  if (!Number.isInteger(binCount) || binCount < 2 || binCount > 30) {
-    message.textContent = "Histogram bins must be an integer from 2 to 30.";
-    return null;
-  }
-
-  message.textContent = lambda >= mu && mu > 0
-    ? "Warning: λ ≥ μ. The queue may grow without limit."
-    : "";
-
-  return { lambda, mu, bin_count: binCount };
-}
-
-async function apiRequest(path, options = {}) {
-  const response = await fetch(`${window.OSE_API_BASE}/api/health`), {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    }
-  });
-
-  if (!response.ok) {
-    let detail = `HTTP ${response.status}`;
-    try {
-      const errorBody = await response.json();
-      detail = errorBody.detail || detail;
-    } catch (_) {
-      // Keep the HTTP status when the response is not JSON.
-    }
-    throw new Error(detail);
-  }
-
-  if (response.status === 204) {
-    return null;
-  }
-
-  return response.json();
-}
-
-function setBackendStatus(status, text) {
-  backendBadge.className = `backend-badge ${status}`;
-  backendBadge.textContent = text;
-}
-
-async function checkBackend() {
-  setBackendStatus("checking", "Backend: checking…");
   try {
-    const health = await apiRequest("/api/health");
-    setBackendStatus("online", `Backend: online (${health.version})`);
+    const parameters = validate({
+      lambda: lambdaInput.value,
+      mu: muInput.value,
+      bin_count: Number(binCountInput.value)
+    });
+    message.textContent = parameters.lambda >= parameters.mu && parameters.mu > 0
+      ? "Warning: λ ≥ μ. The queue may grow without limit."
+      : "";
+    return parameters;
   } catch (error) {
-    setBackendStatus("offline", "Backend: offline");
-    message.textContent = `Cannot reach backend: ${error.message}`;
+    message.textContent = error.message;
+    return null;
   }
+}
+
+function stepsPerTick() {
+  const n = Number(speedInput?.value || 1);
+  return Number.isInteger(n) && n > 0 ? n : 1;
 }
 
 function drawCustomer(x, y, fillStyle) {
@@ -199,7 +159,6 @@ function draw(snapshot = null) {
 }
 
 function updateStatus(snapshot) {
-  latestSnapshot = snapshot;
   timeValue.textContent = Number(snapshot.simulation_time).toFixed(1);
   queueValue.textContent = snapshot.queue_length;
   serverValue.textContent = snapshot.server_busy ? "Busy" : "Idle";
@@ -219,7 +178,7 @@ function appendQueueChart(snapshot) {
   queueChart.data.labels.push(Number(snapshot.simulation_time).toFixed(1));
   queueChart.data.datasets[0].data.push(snapshot.customers_in_system);
 
-  if (queueChart.data.labels.length > MAX_CHART_POINTS) {
+  while (queueChart.data.labels.length > MAX_CHART_POINTS) {
     queueChart.data.labels.shift();
     queueChart.data.datasets[0].data.shift();
   }
@@ -233,21 +192,23 @@ function updateHistogram(snapshot) {
   histogramChart.update("none");
 }
 
-async function createSession(parameters) {
-  const snapshot = await apiRequest("/api/sessions", {
-    method: "POST",
-    body: JSON.stringify(parameters)
-  });
-  sessionId = snapshot.session_id;
+function render(withChartPoint) {
+  const snapshot = simulation.snapshot();
   updateStatus(snapshot);
+  if (withChartPoint) appendQueueChart(snapshot);
   updateHistogram(snapshot);
-  return snapshot;
 }
 
-async function stepSimulation() {
-  if (timerId === null || requestInProgress) {
-    return;
+function ensureSimulation(parameters) {
+  if (!simulation) {
+    simulation = new MM1Simulation(parameters);
+  } else {
+    simulation.setParameters(parameters);
   }
+}
+
+function stepSimulation() {
+  if (timerId === null) return;
 
   const parameters = validateInputs();
   if (!parameters) {
@@ -255,56 +216,23 @@ async function stepSimulation() {
     return;
   }
 
-  requestInProgress = true;
   try {
-    if (!sessionId) {
-      await createSession(parameters);
-    }
-
-    const snapshot = await apiRequest(`/api/sessions/${sessionId}/step`, {
-      method: "POST",
-      body: JSON.stringify(parameters)
-    });
-
-    updateStatus(snapshot);
-    appendQueueChart(snapshot);
-    updateHistogram(snapshot);
-    setBackendStatus("online", "Backend: online");
+    ensureSimulation(parameters);
+    simulation.run(stepsPerTick());
+    render(true);
   } catch (error) {
     pauseSimulation();
-    setBackendStatus("offline", "Backend: offline");
     message.textContent = `Simulation stopped: ${error.message}`;
-  } finally {
-    requestInProgress = false;
   }
 }
 
-async function startSimulation() {
+function startSimulation() {
   const parameters = validateInputs();
-  if (!parameters || timerId !== null) {
-    return;
-  }
+  if (!parameters || timerId !== null) return;
 
-  startButton.disabled = true;
-  try {
-    if (!sessionId) {
-      await createSession(parameters);
-    } else {
-      const snapshot = await apiRequest(`/api/sessions/${sessionId}/parameters`, {
-        method: "PUT",
-        body: JSON.stringify(parameters)
-      });
-      updateStatus(snapshot);
-      updateHistogram(snapshot);
-    }
-
-    timerId = window.setInterval(stepSimulation, STEP_DURATION_MS);
-  } catch (error) {
-    setBackendStatus("offline", "Backend: offline");
-    message.textContent = `Could not start simulation: ${error.message}`;
-  } finally {
-    startButton.disabled = false;
-  }
+  ensureSimulation(parameters);
+  render(false);
+  timerId = window.setInterval(stepSimulation, STEP_DURATION_MS);
 }
 
 function pauseSimulation() {
@@ -314,20 +242,10 @@ function pauseSimulation() {
   }
 }
 
-async function resetSimulation() {
+function resetSimulation() {
   pauseSimulation();
-  requestInProgress = false;
+  simulation = null;
 
-  if (sessionId) {
-    try {
-      await apiRequest(`/api/sessions/${sessionId}`, { method: "DELETE" });
-    } catch (error) {
-      message.textContent = `Session reset locally; backend cleanup failed: ${error.message}`;
-    }
-  }
-
-  sessionId = null;
-  latestSnapshot = null;
   queueChart.data.labels = [];
   queueChart.data.datasets[0].data = [];
   queueChart.update("none");
@@ -346,22 +264,11 @@ async function resetSimulation() {
   draw();
 }
 
-async function refreshParameters() {
+function refreshParameters() {
   const parameters = validateInputs();
-  if (!parameters || !sessionId) {
-    return;
-  }
-
-  try {
-    const snapshot = await apiRequest(`/api/sessions/${sessionId}/parameters`, {
-      method: "PUT",
-      body: JSON.stringify(parameters)
-    });
-    updateStatus(snapshot);
-    updateHistogram(snapshot);
-  } catch (error) {
-    message.textContent = `Could not update parameters: ${error.message}`;
-  }
+  if (!parameters || !simulation) return;
+  simulation.setParameters(parameters);
+  render(false);
 }
 
 startButton.addEventListener("click", startSimulation);
@@ -372,5 +279,7 @@ lambdaInput.addEventListener("change", refreshParameters);
 muInput.addEventListener("change", refreshParameters);
 window.addEventListener("beforeunload", pauseSimulation);
 
+engineBadge.className = "backend-badge online";
+engineBadge.textContent = `Engine: browser (${ENGINE_VERSION})`;
+
 draw();
-checkBackend();

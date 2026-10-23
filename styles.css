@@ -51,7 +51,8 @@ h3 { margin-top: 28px; margin-bottom: 10px; }
 }
 
 label { display: flex; flex-direction: column; gap: 5px; font-weight: bold; }
-input { width: 110px; padding: 8px; border: 1px solid #aaa; border-radius: 5px; }
+input, select { width: 110px; padding: 8px; border: 1px solid #aaa; border-radius: 5px; font: inherit; font-weight: normal; background: white; }
+select { width: 140px; }
 button { padding: 9px 18px; border: 1px solid #888; border-radius: 5px; cursor: pointer; background: #f7f7f7; }
 button:hover { background: #e8e8e8; }
 button:disabled { cursor: not-allowed; opacity: 0.55; }
@@ -86,5 +87,5 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   body { margin: 16px auto; padding: 0 10px; }
   .panel { padding: 15px; }
   .controls { align-items: stretch; }
-  label, input, button { width: 100%; }
+  label, input, select, button { width: 100%; }
 }

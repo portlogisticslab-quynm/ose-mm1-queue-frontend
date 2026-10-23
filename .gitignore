@@ -1,4 +1,2 @@
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
+.wrangler/
+node_modules/

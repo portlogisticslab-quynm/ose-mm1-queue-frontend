@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>M/M/1 Queue Simulation</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
   <main class="panel">
     <div class="title-row">
       <div>
         <h2>M/M/1 Queue Simulation</h2>
-        <p class="subtitle">Frontend display connected to a protected FastAPI simulation backend.</p>
+        <p class="subtitle">The simulation runs entirely in your browser — no server round-trips.</p>
       </div>
-      <span id="backendBadge" class="backend-badge checking">Backend: checking…</span>
+      <span id="backendBadge" class="backend-badge checking">Engine: loading…</span>
     </div>
 
     <div class="controls">
@@ -31,6 +31,17 @@
       <label>
         Histogram bins
         <input id="binCount" type="number" value="10" min="2" max="30" step="1">
+      </label>
+
+      <label>
+        Speed (steps/tick)
+        <select id="speed">
+          <option value="1" selected>1× (Δt 0.2)</option>
+          <option value="5">5×</option>
+          <option value="25">25×</option>
+          <option value="100">100×</option>
+          <option value="1000">1000×</option>
+        </select>
       </label>
 
       <button id="startButton" type="button">Start</button>
@@ -69,7 +80,7 @@
     © 2026 Nguyen Minh Quy – OSE Logistics Simulation Lab
   </footer>
 
-  <script src="config.js"></script>
-  <script src="app.js"></script>
+  <script src="mm1-engine.js?v=3"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
